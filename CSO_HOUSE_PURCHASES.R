@@ -17,29 +17,44 @@ HPA02 <- cso_get_data('HPA02')
 HPA02_shaped <- HPA02 %>% 
   gather(Year, Volume, 7:ncol(HPA02))
 
+HPA02_filtered <- HPA02_shaped %>%
+  filter(Type.of.Buyer %in% c('Household Buyer - All', 'Non-Household Buyer') &
+         Type.of.Sale == 'All Sale Types' &
+         Stamp.Duty.Event == 'Executions'&
+         Statistic == 'Volume of Sales')
+
 #new buys data - all counties
-new_purchases <- HPA02_shaped %>%
-  filter(County == 'All Counties',
-         Type.of.Buyer %in% c('Household Buyer - All', 'Non-Household Buyer'),
-         Type.of.Sale == 'All Sale Types',
-         Statistic == 'Volume of Sales',
+new_purchases <- HPA02_filtered %>%
+  filter(County == 'All Counties' &
          Dwelling.Status == 'New')
 
+#new buys data - by county
+new_purchases_county <- HPA02_filtered %>%
+  filter(County != 'All Counties' &
+         Dwelling.Status == 'New' &
+         Type.of.Buyer == 'Non-Household Buyer')
+
 #all buys data - all counties
-all_purchases <- HPA02_shaped %>%
-  filter(County == 'All Counties',
-         Type.of.Buyer %in% c('Household Buyer - All', 'Non-Household Buyer'),
-         Type.of.Sale == 'All Sale Types',
-         Statistic == 'Volume of Sales',
+all_purchases <- HPA02_filtered %>%
+  filter(County == 'All Counties' &
          Dwelling.Status == 'All Dwelling Statuses')
 
+#all buys data - by county
+all_purchases_county <- HPA02_filtered %>%
+  filter(County != 'All Counties' &
+        Dwelling.Status == 'All Dwelling Statuses' &
+        Type.of.Buyer == 'Non-Household Buyer')
+
 #secondary buys data - all counties
-existing_purchases <- HPA02_shaped %>%
-  filter(County == 'All Counties',
-         Type.of.Buyer %in% c('Household Buyer - All', 'Non-Household Buyer'),
-         Type.of.Sale == 'All Sale Types',
-         Statistic == 'Volume of Sales',
+existing_purchases <- HPA02_filtered %>%
+  filter(County == 'All Counties' &
          Dwelling.Status == 'Existing')
+
+#secondary buys - by county
+existing_purchases_county <- HPA02_filtered %>%
+  filter(County != 'All Counties' &
+         Dwelling.Status == 'Existing' &
+         Type.of.Buyer == 'Non-Household Buyer')
 
 #new buys % change - institutional buyers
 new_pur_inst_increase_pct <- new_purchases %>%
@@ -90,12 +105,21 @@ ggplot(data = new_purchases, aes(x = Year, y = Volume, fill = factor(Type.of.Buy
 
 #line chart - new purchases, institutional volume annual change
 ggplot(data = new_pur_inst_increase_pct, aes(x = Year, y = YR_PCT_CHNG, group = 1)) +
-  geom_line(color = 'blue', size = 0.8, arrow = arrow(type = "closed")) +
+  geom_line(color = 'blue', size = 0.8, arrow = arrow(type = 'closed')) +
   scale_y_continuous(labels = percent) +
   geom_point(color = 'blue', size = 2) + 
   ggtitle('Residential New Home Purchases by Institutions Year on Year Change (2020-2021)') +
   ylab('Year on Year % Change') + 
+  geom_label(label = paste(round(new_pur_inst_increase_pct$YR_PCT_CHNG * 100, 2), '%'),
+             color = 'white',
+             fill = 'blue') +
   theme(plot.title = element_text(hjust = 0.5))
+
+#heatmap of new purchases from institutions by county and year
+ggplot(new_purchases_county, aes(x = Year, y = County, fill = Volume)) +
+  ggtitle('Institution Residential New Home Purchases By Year and County (2020-2021)') +
+  geom_tile() +
+  geom_text(label = new_purchases_county$Volume, color = 'white')
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
@@ -109,13 +133,21 @@ ggplot(data = all_purchases, aes(x = Year, y = Volume, fill = factor(Type.of.Buy
 
 #line chart - new purchases, institutional volume annual change
 ggplot(data = all_pur_inst_increase_pct, aes(x = Year, y = YR_PCT_CHNG, group = 1)) +
-  geom_line(color = 'blue', size = 0.8, arrow = arrow(type = "closed")) +
+  geom_line(color = 'blue', size = 0.8, arrow = arrow(type = 'closed')) +
   scale_y_continuous(labels = percent) +
   geom_point(color = 'blue', size = 2) + 
   ggtitle('Residential All Home Purchases by Institutions Year on Year Change (2020-2021)') +
   ylab('Year on Year % Change') + 
+  geom_label(label = paste(round(all_pur_inst_increase_pct$YR_PCT_CHNG * 100, 2), '%'),
+             color = 'white',
+             fill = 'blue') + 
   theme(plot.title = element_text(hjust = 0.5))
 
+#heatmap of all purchases from institutions by county and year
+ggplot(all_purchases_county, aes(x = Year, y = County, fill = Volume)) +
+  ggtitle('Institution Residential All Home Purchases By Year and County (2020-2021)') +
+  geom_tile() +
+  geom_text(label = all_purchases_county$Volume, color = 'white')
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
@@ -129,11 +161,18 @@ ggplot(data = existing_purchases, aes(x = Year, y = Volume, fill = factor(Type.o
 
 #line chart - existing purchases, institutional volume annual change
 ggplot(data = existing_pur_inst_increase_pct, aes(x = Year, y = YR_PCT_CHNG, group = 1)) +
-  geom_line(color = 'blue', size = 0.8, arrow = arrow(type = "closed")) +
+  geom_line(color = 'blue', size = 0.8, arrow = arrow(type = 'closed')) +
   scale_y_continuous(labels = percent) +
   geom_point(color = 'blue', size = 2) + 
   ggtitle('Residential Existing Home Purchases by Institutions Year on Year Change (2020-2021)') +
   ylab('Year on Year % Change') + 
+  geom_label(label = paste(round(existing_pur_inst_increase_pct$YR_PCT_CHNG * 100, 2), '%'),
+             color = 'white',
+             fill = 'blue') +
   theme(plot.title = element_text(hjust = 0.5))
 
-
+#heatmap of all purchases from institutions by county and year
+ggplot(existing_purchases_county, aes(x = Year, y = County, fill = Volume)) +
+  ggtitle('Institution Residential Existing Home Purchases By Year and County (2020-2021)') +
+  geom_tile() +
+  geom_text(label = existing_purchases_county$Volume, color = 'white')
