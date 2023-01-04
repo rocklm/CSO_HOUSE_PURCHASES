@@ -51,7 +51,7 @@ inst_increase_pct <- HPA02_filtered %>%
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 #bar chart bar colours and fill levels
-bar_cols <- c('#7CBFFA', '#000958')
+bar_cols <- c('#7CBFFA', '#000958', '#11F131', '#585F59', '#900373', '#D626B2')
 line_cols <- c('#400033', '#900373', '#D626B2')
 area_cols <- c('#11F131', '#585F59')
 fill_levels <- c('Non-Household Buyer', 'Household Buyer - All')
@@ -59,8 +59,10 @@ fill_levels <- c('Non-Household Buyer', 'Household Buyer - All')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 #bar chart - purchases, household vs institutional buyers through time
-ggplot(data = HPA02_filtered, aes(x = Year, y = Volume, fill = factor(Type.of.Buyer, levels = fill_levels))) +
-  geom_bar(stat = 'identity', alpha = 0.6) +
+HPA02_filtered %>%
+  filter(Dwelling.Status != 'All Dwelling Statuses') %>%
+ggplot(aes(x = Year, y = Volume, fill = factor(Type.of.Buyer, levels = fill_levels))) +
+  geom_bar(stat = 'identity', alpha = 0.7) +
   ggtitle('Home Purchases by Institution Vs Household Buyer (2010-2021)') +
   scale_fill_manual(values = bar_cols) +
   guides(fill = guide_legend(title = 'Buyer Type')) +
@@ -70,7 +72,7 @@ ggplot(data = HPA02_filtered, aes(x = Year, y = Volume, fill = factor(Type.of.Bu
 
 #line chart -  purchases, institutional volume annual change
 ggplot(data = inst_increase_pct, aes(x = Year, y = YR_PCT_CHNG, group = Dwelling.Status)) +
-  geom_line(aes(color = Dwelling.Status), size = 0.8, arrow = arrow(type = 'closed'), alpha = 0.6) +
+  geom_line(aes(color = Dwelling.Status), size = 0.8, arrow = arrow(type = 'closed'), alpha = 0.7) +
   scale_y_continuous(labels = percent) +
   geom_point(aes(color = Dwelling.Status), size = 2) + 
   scale_fill_manual(values = line_cols) +
@@ -87,7 +89,7 @@ ggplot(data = inst_increase_pct, aes(x = Year, y = YR_PCT_CHNG, group = Dwelling
 #area chart - institutional sales an buys by participant and sector through time
 HPA12_filtered %>%
   ggplot(aes(x = Year, y = Volume, group = Participant)) +
-  geom_area(aes(color = Participant, fill = Participant), alpha = 0.6) +
+  geom_area(aes(color = Participant, fill = Participant), alpha = 0.7) +
   scale_fill_manual(values = area_cols) +
   scale_color_manual(values = area_cols) +
   facet_grid(cols = vars(Type.of.Dwelling), rows = vars(NACE.Section), scales = 'free') +
@@ -95,39 +97,24 @@ HPA12_filtered %>%
   theme(plot.title = element_text(hjust = 0.5),
         axis.text.x = element_text(angle = 90))
 
+#bar chart - institutional purchases by sector
 HPA12_filtered %>%
-  filter(Participant == 'Purchases') %>%
+  filter(Participant == 'Purchaser' &
+           Type.of.Dwelling == 'All Dwelling Types' &
+           NACE.Section != 'All NACE Economic Sector') %>% 
   ggplot(aes(x = Year, y = Volume, fill = NACE.Section)) +
-  geom_bar(stat = 'identity')
-
-#heatmap of new purchases from institutions by county and year
-HPA02_filtered %>%
-  filter(County != 'All Counties' &
-           Dwelling.Status == 'New' &
-           Type.of.Buyer == 'Non-Household Buyer') %>%
-ggplot(aes(x = Year, y = County, fill = Volume)) +
-  ggtitle('Institution Residential New Home Purchases By Year and County (2020-2021)') +
-  geom_tile() +
-  geom_text(label = new_purchases_county$Volume, color = 'white')
+  geom_bar(stat = 'identity') +
+  scale_fill_manual(values = bar_cols) +
+  ggtitle('Institution Residential Home Purchases by Sector (2020-2021)') +
+  theme(plot.title = element_text(hjust = 0.5))
 
 #heatmap of all purchases from institutions by county and year
 HPA02_filtered %>%
   filter(County != 'All Counties' &
            Dwelling.Status == 'All Dwelling Statuses' &
-           Type.of.Buyer == 'Non-Household Buyer') %>%
-ggplot(all_purchases_county, aes(x = Year, y = County, fill = Volume)) +
+           Type.of.Buyer == 'Non-Household Buyer') %>% {
+ggplot(., aes(x = Year, y = County, fill = Volume)) +
   ggtitle('Institution Residential All Home Purchases By Year and County (2020-2021)') +
   geom_tile() +
-  geom_text(label = all_purchases_county$Volume, color = 'white')
-
-#heatmap of all purchases from institutions by county and year
-HPA02_filtered %>%
-  filter(County != 'All Counties' &
-           Dwelling.Status == 'Existing' &
-           Type.of.Buyer == 'Non-Household Buyer') %>%
-ggplot(existing_purchases_county, aes(x = Year, y = County, fill = Volume)) +
-  ggtitle('Institution Residential Existing Home Purchases By Year and County (2020-2021)') +
-  geom_tile() +
-  geom_text(label = existing_purchases_county$Volume, color = 'white')
-
-
+  geom_text(label = .$Volume, color = 'white')
+           }
