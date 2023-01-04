@@ -114,7 +114,7 @@ HPA02_filtered %>%
            Dwelling.Status == 'All Dwelling Statuses' &
            Type.of.Buyer == 'Non-Household Buyer') %>% {
 ggplot(., aes(x = Year, y = County, fill = Volume)) +
-  ggtitle('Institution Residential All Home Purchases By Year and County (2020-2021)') +
+  ggtitle('Institution Residential All Home Purchases by Year and County (2020-2021)') +
   geom_tile() +
   geom_text(label = .$Volume, color = 'white')
            }
